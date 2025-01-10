@@ -11,7 +11,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'vue': 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
     }
   },
   build: {
@@ -19,9 +20,19 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        chunkFileNames: 'assets/js/[name]-[hash].js',
-        entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
+        chunkFileNames: 'js/[name]-[hash].js',
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.')
+          const ext = info[info.length - 1]
+          if (/\.(png|jpe?g|gif|svg|ico)$/.test(assetInfo.name)) {
+            return `images/[name]-[hash].[ext]`
+          }
+          if (/\.css$/.test(assetInfo.name)) {
+            return `css/[name]-[hash].[ext]`
+          }
+          return `assets/[name]-[hash].[ext]`
+        }
       }
     }
   }
