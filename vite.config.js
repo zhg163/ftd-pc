@@ -16,12 +16,10 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    assetsDir: '',
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
-        chunkFileNames: '[name]-[hash].js',
-        entryFileNames: '[name]-[hash].js',
-        assetFileNames: '[name]-[hash].[ext]'
+        manualChunks: undefined
       }
     }
   }
