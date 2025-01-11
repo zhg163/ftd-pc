@@ -11,28 +11,17 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'vue': 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
+    assetsDir: '',
     rollupOptions: {
       output: {
-        chunkFileNames: 'js/[name]-[hash].js',
-        entryFileNames: 'js/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.')
-          const ext = info[info.length - 1]
-          if (/\.(png|jpe?g|gif|svg|ico)$/.test(assetInfo.name)) {
-            return `images/[name]-[hash].[ext]`
-          }
-          if (/\.css$/.test(assetInfo.name)) {
-            return `css/[name]-[hash].[ext]`
-          }
-          return `assets/[name]-[hash].[ext]`
-        }
+        chunkFileNames: '[name]-[hash].js',
+        entryFileNames: '[name]-[hash].js',
+        assetFileNames: '[name]-[hash].[ext]'
       }
     }
   }

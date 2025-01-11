@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import GlobalFarmsView from '../views/GlobalFarmsView.vue'
-import LocaDemo from '../views/LocaDemo.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,14 +10,44 @@ const router = createRouter({
       component: HomeView
     },
     {
+      path: '/about',
+      name: 'about',
+      component: () => import('../views/AboutView.vue')
+    },
+    {
+      path: '/map',
+      name: 'map',
+      component: () => import('../views/MapView.vue')
+    },
+    {
+      path: '/tasks',
+      name: 'tasks',
+      component: () => import('../views/TasksView.vue')
+    },
+    {
+      path: '/alerts',
+      name: 'alerts',
+      component: () => import('../views/AlertsView.vue')
+    },
+    {
+      path: '/analysis',
+      name: 'analysis',
+      component: () => import('../views/AnalysisView.vue')
+    },
+    {
       path: '/global-farms',
       name: 'globalFarms',
-      component: GlobalFarmsView
+      component: () => import('../views/GlobalFarmsView.vue')
     },
     {
       path: '/loca-demo',
       name: 'locaDemo',
-      component: LocaDemo
+      component: () => import('../views/LocaDemo.vue')
+    },
+    {
+      path: '/scale-map',
+      name: 'scaleMap',
+      component: () => import('../views/ScaleMapView.vue')
     }
   ]
 })
