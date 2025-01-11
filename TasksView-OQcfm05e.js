@@ -1,0 +1,1 @@
+import{_ as a,c as t,a as s,o}from"./index-DKXKY2aF.js";const c={class:"tasks-view"},n={__name:"TasksView",setup(_){return(r,e)=>(o(),t("div",c,e[0]||(e[0]=[s("h2",null,"任务",-1),s("div",{class:"tasks-content"},[s("p",null,"任务功能开发中...")],-1)])))}},p=a(n,[["__scopeId","data-v-7a6c6d04"]]);export{p as default};

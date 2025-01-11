@@ -1,0 +1,1 @@
+import{_ as e,c as o,a,o as t}from"./index-DKXKY2aF.js";const r={class:"dashboard-view"},d={__name:"DashboardView",setup(c){return(n,s)=>(t(),o("div",r,s[0]||(s[0]=[a("h2",null,"仪表盘",-1),a("div",{class:"dashboard-content"},[a("p",null,"仪表盘功能开发中...")],-1)])))}},l=e(d,[["__scopeId","data-v-6d7a3f93"]]);export{l as default};
