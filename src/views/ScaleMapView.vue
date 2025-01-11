@@ -12,7 +12,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
-import { key } from '@/config/map'
+import { MAP_CONFIG } from '@/config/map'
 
 const map = ref(null)
 const marker = ref(null)
@@ -36,8 +36,8 @@ const farmData = {
 const initMap = async () => {
   try {
     const AMap = await AMapLoader.load({
-      key: key,
-      version: '2.0',
+      key: MAP_CONFIG.key,
+      version: MAP_CONFIG.version,
       plugins: ['AMap.Scale', 'AMap.ToolBar']
     })
 
