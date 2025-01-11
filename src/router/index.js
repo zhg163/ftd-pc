@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import SimpleMapView from '../views/SimpleMapView.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('/ftd-pc/'),
   routes: [
     {
       path: '/',
@@ -50,9 +51,14 @@ const router = createRouter({
       component: () => import('../views/LocaDemo.vue')
     },
     {
-      path: '/scale-map',
+      path: '/ftd-pc/scale-map',
       name: 'scaleMap',
       component: () => import('../views/ScaleMapView.vue')
+    },
+    {
+      path: '/simple-map',
+      name: 'simpleMap',
+      component: SimpleMapView
     }
   ]
 })

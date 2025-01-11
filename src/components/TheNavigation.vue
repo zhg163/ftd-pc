@@ -3,3 +3,8 @@
   icon: 'fas fa-globe',
   route: '/global-farms'
 }, 
+{
+  name: '农田地图',
+  icon: 'fas fa-map',
+  route: '/map'
+} 

@@ -1,27 +1,23 @@
 <template>
   <div class="map-view">
-    <h2>地图</h2>
-    <div class="map-content">
-      <!-- 地图内容将在这里实现 -->
-      <p>地图功能开发中...</p>
-    </div>
+    <ScaleMapView />
   </div>
 </template>
 
 <script setup>
-// 地图组件的逻辑将在这里实现
+import ScaleMapView from './ScaleMapView.vue'
 </script>
 
 <style scoped>
 .map-view {
-  padding: 20px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
-.map-content {
-  margin-top: 20px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+:deep(.map-container) {
+  width: 100%;
+  height: 100%;
 }
 </style> 
