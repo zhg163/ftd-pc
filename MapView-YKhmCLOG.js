@@ -1,1 +1,0 @@
-import{_ as s,c as t,a as e,o}from"./index-DKXKY2aF.js";const c={class:"map-view"},n={__name:"MapView",setup(p){return(_,a)=>(o(),t("div",c,a[0]||(a[0]=[e("h2",null,"地图",-1),e("div",{class:"map-content"},[e("p",null,"地图功能开发中...")],-1)])))}},l=s(n,[["__scopeId","data-v-f274a812"]]);export{l as default};

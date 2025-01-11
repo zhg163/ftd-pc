@@ -1,1 +1,0 @@
-import{_ as e,c as t,a as s,o as n}from"./index-DKXKY2aF.js";const o={class:"analysis-view"},c={__name:"AnalysisView",setup(l){return(_,a)=>(n(),t("div",o,a[0]||(a[0]=[s("h2",null,"分析",-1),s("div",{class:"analysis-content"},[s("p",null,"分析功能开发中...")],-1)])))}},r=e(c,[["__scopeId","data-v-4a83c8c0"]]);export{r as default};

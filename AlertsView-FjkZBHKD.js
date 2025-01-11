@@ -1,1 +1,0 @@
-import{_ as t,c as a,a as e,o}from"./index-DKXKY2aF.js";const r={class:"alerts-view"},c={__name:"AlertsView",setup(l){return(n,s)=>(o(),a("div",r,s[0]||(s[0]=[e("h2",null,"预警",-1),e("div",{class:"alerts-content"},[e("p",null,"预警功能开发中...")],-1)])))}},p=t(c,[["__scopeId","data-v-6fbdbcbb"]]);export{p as default};
