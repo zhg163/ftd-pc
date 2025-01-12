@@ -29,91 +29,144 @@ let roadNetLayer = null
 const switchLayer = (type) => {
   if (type === currentLayer.value) return
   
-  currentLayer.value = type
-  if (type === 'satellite') {
-    satelliteLayer.show()
-    roadNetLayer.show()
-  } else {
-    satelliteLayer.hide()
-    roadNetLayer.hide()
+  try {
+    currentLayer.value = type
+    console.log(`Switching to ${type} layer`)
+    
+    if (type === 'satellite') {
+      console.log('Showing satellite layers')
+      // 先显示卫星图层
+      satelliteLayer.show()
+      // 确保卫星图层在最底层
+      satelliteLayer.setzIndex(1)
+      // 再显示路网图层
+      roadNetLayer.show()
+      // 路网图层应该在卫星图层之上
+      roadNetLayer.setzIndex(2)
+      
+      // 隐藏默认底图
+      map.setFeatures(['building'])
+      
+      console.log('Satellite layer visible:', satelliteLayer.getVisible())
+      console.log('Road network layer visible:', roadNetLayer.getVisible())
+    } else {
+      console.log('Hiding satellite layers')
+      satelliteLayer.hide()
+      roadNetLayer.hide()
+      // 显示默认底图所有图层
+      map.setFeatures(['bg', 'building', 'point', 'road'])
+      
+      console.log('Satellite layer visible:', satelliteLayer.getVisible())
+      console.log('Road network layer visible:', roadNetLayer.getVisible())
+    }
+  } catch (error) {
+    console.error('Error switching layers:', error)
   }
 }
 
 const initMap = async () => {
-  const container = document.getElementById('container')
-  const canvas = document.createElement('canvas')
-  canvas.setAttribute('willReadFrequently', 'true')
-  container.appendChild(canvas)
+  try {
+    const container = document.getElementById('container')
+    const canvas = document.createElement('canvas')
+    canvas.setAttribute('willReadFrequently', 'true')
+    container.appendChild(canvas)
 
-  const AMap = await AMapLoader.load({
-    key: MAP_CONFIG.key,
-    version: '2.0',
-    plugins: ['AMap.LabelMarker', 'AMap.TileLayer.Satellite', 'AMap.TileLayer.RoadNet']
-  })
-  
-  map = new AMap.Map('container', {
-    zoom: 2,
-    center: [18.5353, 4.3947]
-  })
-
-  // 初始化卫星图层和路网图层
-  satelliteLayer = new AMap.TileLayer.Satellite()
-  roadNetLayer = new AMap.TileLayer.RoadNet()
-  map.add([satelliteLayer, roadNetLayer])
-  satelliteLayer.hide()
-  roadNetLayer.hide()
-
-  // 创建国家名称标签，使用 LabelMarker
-  const countries = [
-    { name: '中国', position: [105.0, 35.0] },
-    { name: '美国', position: [-100.0, 40.0] },
-    { name: '俄罗斯', position: [100.0, 60.0] },
-    { name: '巴西', position: [-55.0, -10.0] },
-    { name: '印度', position: [78.0, 20.0] },
-    { name: '澳大利亚', position: [133.0, -25.0] },
-    { name: '加拿大', position: [-95.0, 60.0] },
-    { name: '中非共和国', position: [18.5353, 4.3947] }
-  ]
-
-  countries.forEach(country => {
-    const labelMarker = new AMap.LabelMarker({
-      position: country.position,
-      text: {
-        content: country.name,
-        direction: 'center',
-        style: {
-          fontSize: 14,
-          fontWeight: 'bold',
-          fillColor: '#333',
-          strokeColor: '#fff',
-          strokeWidth: 2,
-          padding: [3, 10],
-          backgroundColor: 'rgba(255,255,255,0.7)',
-          borderRadius: 3
-        }
-      },
-      rank: 2,
-      zIndex: 10
+    console.log('Loading AMap with plugins...')
+    const AMap = await AMapLoader.load({
+      key: MAP_CONFIG.key,
+      version: '2.0',
+      plugins: ['AMap.LabelMarker', 'AMap.TileLayer.Satellite', 'AMap.TileLayer.RoadNet']
     })
-    countryLabels.value.push(labelMarker)
-  })
+    
+    console.log('Creating map instance...')
+    map = new AMap.Map('container', {
+      zoom: 2,
+      center: [18.5353, 4.3947],
+      features: ['bg', 'building', 'point', 'road'],
+      viewMode: '2D'
+    })
 
-  // 创建标注图层
-  const labelLayer = new AMap.LabelsLayer({
-    zooms: [2, 4.6],  // 显示范围
-    zIndex: 1000,
-    collision: true,  // 开启标注避让
-    animation: true   // 开启标注动画效果
-  })
+    // 等待地图加载完成后再初始化图层
+    map.on('complete', () => {
+      console.log('Map loaded completely, initializing layers...')
+      
+      // 初始化卫星图层和路网图层
+      console.log('Initializing satellite and road network layers...')
+      satelliteLayer = new AMap.TileLayer.Satellite({
+        zooms: [1, 20],  // 设置图层缩放范围
+        visible: false
+      })
+      
+      roadNetLayer = new AMap.TileLayer.RoadNet({
+        zooms: [1, 20],
+        visible: false
+      })
+      
+      console.log('Adding layers to map...')
+      // 分别添加图层并设置层级
+      map.add(satelliteLayer)
+      satelliteLayer.setzIndex(1)
+      
+      map.add(roadNetLayer)
+      roadNetLayer.setzIndex(2)
+      
+      console.log('Layers initialized')
+    })
 
-  // 将标注图层添加到地图
-  map.add(labelLayer)
-  
-  // 将标注添加到标注图层
-  labelLayer.add(countryLabels.value)
+    // 创建国家名称标签，使用 LabelMarker
+    const countries = [
+      { name: '中国', position: [105.0, 35.0] },
+      { name: '美国', position: [-100.0, 40.0] },
+      { name: '俄罗斯', position: [100.0, 60.0] },
+      { name: '巴西', position: [-55.0, -10.0] },
+      { name: '印度', position: [78.0, 20.0] },
+      { name: '澳大利亚', position: [133.0, -25.0] },
+      { name: '加拿大', position: [-95.0, 60.0] },
+      { name: '中非共和国', position: [18.5353, 4.3947] }
+    ]
 
-  map.on('zoomend', handleZoomChange)
-  handleZoomChange()
+    countries.forEach(country => {
+      const labelMarker = new AMap.LabelMarker({
+        position: country.position,
+        text: {
+          content: country.name,
+          direction: 'center',
+          style: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            fillColor: '#333',
+            strokeColor: '#fff',
+            strokeWidth: 2,
+            padding: [3, 10],
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            borderRadius: 3
+          }
+        },
+        rank: 2,
+        zIndex: 10
+      })
+      countryLabels.value.push(labelMarker)
+    })
+
+    // 创建标注图层
+    const labelLayer = new AMap.LabelsLayer({
+      zooms: [2, 4.6],  // 显示范围
+      zIndex: 1000,
+      collision: true,  // 开启标注避让
+      animation: true   // 开启标注动画效果
+    })
+
+    // 将标注图层添加到地图
+    map.add(labelLayer)
+    
+    // 将标注添加到标注图层
+    labelLayer.add(countryLabels.value)
+
+    map.on('zoomend', handleZoomChange)
+    handleZoomChange()
+  } catch (error) {
+    console.error('Error initializing map:', error)
+  }
 }
 
 const handleZoomChange = () => {

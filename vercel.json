@@ -6,14 +6,14 @@
   "outputDirectory": ".",
   "routes": [
     {
+      "src": "/ftd-pc/(.*)",
+      "dest": "/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
-      "src": "/ftd-pc/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/ftd-pc/(.*)",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ]
