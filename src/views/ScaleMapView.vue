@@ -1,24 +1,37 @@
 <template>
-  <div class="map-container">
-    <div id="container" class="map"></div>
+  <div class="scale-map-view">
+    <div id="map" class="map-container"></div>
+    <div class="layer-switch">
+      <div class="layer-item">
+        <input type="radio" id="normal" name="layer" value="normal" v-model="currentLayer" checked>
+        <label for="normal">标准图层</label>
+      </div>
+      <div class="layer-item">
+        <input type="radio" id="satellite" name="layer" value="satellite" v-model="currentLayer">
+        <label for="satellite">卫星图</label>
+      </div>
+      <div class="layer-item">
+        <input type="checkbox" id="roadNet" v-model="showRoadNet">
+        <label for="roadNet">路网</label>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { MAP_CONFIG } from '@/config/map'
 
 const map = ref(null)
 const infoWindow = ref(null)
 const markers = ref([])
-// 添加行政区图层变量
-const worldLayer = ref(null)
-const provinceLayer = ref(null)
-const districtPolygons = ref([])
-const districtSearch = ref(null)
-const townshipSearch = ref(null)  // 添加乡镇查询对象
-const villageSearch = ref(null)  // 添加村级查询对象
+const satelliteLayer = ref(null)
+const roadNetLayer = ref(null)
+
+// 控制图层显示的响应式数据
+const currentLayer = ref('normal')
+const showRoadNet = ref(false)
 
 // 全球农业点数据
 const farmPoints = [
@@ -75,7 +88,7 @@ const farmPoints = [
     ]
   },
   {
-    position: [126.6869, 45.7556],
+    position: [126.772535, 45.590819],
     country: '中国',
     region: '东北平原',
     companyCount: 5,
@@ -154,84 +167,59 @@ const farmPoints = [
   }
 ]
 
+// 监听底图切换
+watch(currentLayer, (newValue) => {
+  if (newValue === 'normal') {
+    // 切换到标准图层
+    satelliteLayer.value?.setMap(null)
+    map.value.setMapStyle('amap://styles/normal')
+  } else if (newValue === 'satellite') {
+    // 切换到卫星图
+    satelliteLayer.value?.setMap(map.value)
+    map.value.setMapStyle('amap://styles/dark')
+  }
+})
+
+// 监听路网显示
+watch(showRoadNet, (newValue) => {
+  if (roadNetLayer.value) {
+    roadNetLayer.value.setMap(newValue ? map.value : null)
+  }
+})
+
 // 初始化地图
 const initMap = async () => {
   try {
     const AMap = await AMapLoader.load({
       key: MAP_CONFIG.key,
       version: MAP_CONFIG.version,
-      plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.DistrictLayer', 'AMap.DistrictSearch']
+      plugins: [
+        'AMap.Scale',
+        'AMap.ToolBar',
+        'AMap.TileLayer.Satellite',
+        'AMap.TileLayer.RoadNet'
+      ]
     })
 
-    // 创建地图实例
-    map.value = new AMap.Map('container', {
+    map.value = new AMap.Map('map', {
       zoom: 2,
       center: [0, 0],
       pitch: 0,
       viewMode: '3D',
-      mapStyle: 'amap://styles/normal'
+      mapStyle: 'amap://styles/normal',
+      features: ['bg', 'building', 'point', 'road', 'water'],
+      showLabel: true
     })
+
+    // 初始化图层
+    satelliteLayer.value = new AMap.TileLayer.Satellite()
+    roadNetLayer.value = new AMap.TileLayer.RoadNet()
 
     // 添加比例尺控件
-    map.value.addControl(new AMap.Scale({
-      position: 'LT',
-      offset: new AMap.Pixel(10, 10)
-    }))
-    
+    map.value.addControl(new AMap.Scale())
+
     // 添加工具条控件
-    map.value.addControl(new AMap.ToolBar({
-      position: 'RB',
-      offset: new AMap.Pixel(10, 30)
-    }))
-
-    // 添加世界国家边界图层
-    worldLayer.value = new AMap.DistrictLayer.World({
-      zIndex: 10,
-      styles: {
-        'nation-stroke': '#3366FF',
-        'coastline-stroke': '#3366FF',
-        'nation-stroke-width': 2,
-        'coastline-stroke-width': 2,
-        'fill': '#FFFFFF',
-        'fill-opacity': 0.8
-      }
-    })
-    map.value.add(worldLayer.value)
-
-    // 创建省级行政区图层
-    provinceLayer.value = new AMap.DistrictLayer.Province({
-      zIndex: 12,
-      styles: {
-        'fill': '#FFFFFF',
-        'province-stroke': '#3366FF',
-        'province-stroke-width': 1,
-        'fill-opacity': 0.7
-      }
-    })
-    
-    // 创建行政区查询对象
-    districtSearch.value = new AMap.DistrictSearch({
-      level: 'district',
-      subdistrict: 1,
-      showbiz: false,
-      extensions: 'all'
-    })
-
-    // 创建乡镇查询对象
-    townshipSearch.value = new AMap.DistrictSearch({
-      level: 'street',
-      subdistrict: 1,
-      showbiz: false,
-      extensions: 'all'
-    })
-
-    // 创建村级查询对象
-    villageSearch.value = new AMap.DistrictSearch({
-      level: 'village',
-      subdistrict: 1,
-      showbiz: false,
-      extensions: 'all'
-    })
+    map.value.addControl(new AMap.ToolBar())
 
     // 创建信息窗体
     infoWindow.value = new AMap.InfoWindow({
@@ -245,8 +233,25 @@ const initMap = async () => {
 
     // 监听地图缩放
     map.value.on('zoomend', handleZoomChange)
-  } catch (e) {
-    console.error('地图加载失败：', e)
+
+    // 隐藏版权信息
+    const hideCopyright = () => {
+      const copyright = document.querySelector('.amap-copyright')
+      const logo = document.querySelector('.amap-logo')
+      if (copyright) copyright.style.display = 'none'
+      if (logo) logo.style.display = 'none'
+    }
+
+    hideCopyright()
+    setTimeout(hideCopyright, 100)
+    setTimeout(hideCopyright, 500)
+    map.value.on('complete', () => {
+      hideCopyright()
+      setTimeout(hideCopyright, 100)
+    })
+
+  } catch (error) {
+    console.error('Failed to load map:', error)
   }
 }
 
@@ -258,7 +263,7 @@ const createMarkers = () => {
       icon: new AMap.Icon({
         size: new AMap.Size(25, 34),
         imageSize: new AMap.Size(25, 34),
-        image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_bs.png'  // 使用蓝色标记
+        image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_bs.png'
       })
     })
 
@@ -274,7 +279,7 @@ const showInfoWindow = (point) => {
   const zoom = map.value.getZoom()
   let content = ''
 
-  if (zoom <= 4) {  // 全球视图 1:2000km
+  if (zoom <= 4) {
     content = `
       <div class="info-window">
         <h4>${point.country}</h4>
@@ -282,7 +287,7 @@ const showInfoWindow = (point) => {
         <p>公司数量：${point.companyCount}家</p>
       </div>
     `
-  } else if (zoom <= 8) {  // 国家视图 1:100km
+  } else if (zoom <= 8) {
     content = `
       <div class="info-window">
         <h4>${point.companyName}</h4>
@@ -291,11 +296,11 @@ const showInfoWindow = (point) => {
         <p>无人机总数：${point.droneCount}台</p>
       </div>
     `
-  } else if (zoom <= 12) {  // 区域视图 1:50km
-    const farmsList = point.farms.map(farm => 
+  } else if (zoom <= 12) {
+    const farmsList = point.farms.map(farm =>
       `<p>• ${farm.name}（${farm.area}，${farm.drones}台无人机）</p>`
     ).join('')
-    
+
     content = `
       <div class="info-window">
         <h4>${point.companyName}</h4>
@@ -304,7 +309,7 @@ const showInfoWindow = (point) => {
         </div>
       </div>
     `
-  } else {  // 农场视图 1:500m
+  } else {
     const farmsList = point.farms.map(farm => `
       <div class="farm-detail">
         <h5>${farm.name}</h5>
@@ -332,11 +337,11 @@ const handleMarkerDblClick = (point) => {
   let newZoom = zoom
 
   if (zoom <= 4) {
-    newZoom = 8  // 切换到国家视图
+    newZoom = 8
   } else if (zoom <= 8) {
-    newZoom = 12  // 切换到区域视图
+    newZoom = 12
   } else if (zoom <= 12) {
-    newZoom = 15  // 切换到农场视图
+    newZoom = 15
   }
 
   map.value.setZoomAndCenter(newZoom, point.position)
@@ -345,113 +350,11 @@ const handleMarkerDblClick = (point) => {
 // 处理缩放变化
 const handleZoomChange = () => {
   const zoom = map.value.getZoom()
-  console.log('当前缩放级别:', zoom)  // 添加日志
-  
-  // 清除所有现有边界
-  if (districtPolygons.value.length) {
-    map.value.remove(districtPolygons.value)
-    districtPolygons.value = []
-  }
-  
-  // 控制不同级别行政区边界的显示
-  if (zoom >= 5) {  // 1:500公里时显示省级边界
-    worldLayer.value.hide()
-    provinceLayer.value.setMap(map.value)
-    console.log('显示省级边界')  // 添加日志
-    
-    // 在缩放到1:20公里时，显示县级边界
-    if (zoom >= 10) {
-      const center = map.value.getCenter()
-      console.log('搜索县级边界, 中心点:', center)  // 添加日志
-      
-      // 先搜索县级边界
-      districtSearch.value.search(center, (status, result) => {
-        console.log('县级搜索结果:', status, result)  // 添加日志
-        if (status === 'complete' && result.districtList && result.districtList.length > 0) {
-          const district = result.districtList[0]
-          console.log('找到县级区域:', district.name)  // 添加日志
-          
-          if (district.boundaries) {
-            const polygons = district.boundaries.map(bound => {
-              return new AMap.Polygon({
-                path: bound,
-                strokeColor: '#3366FF',
-                strokeWeight: 1,
-                fillColor: '#FFFFFF',
-                fillOpacity: 0.5,
-                zIndex: 13
-              })
-            })
-            districtPolygons.value.push(...polygons)
-            map.value.add(polygons)
-          }
+  console.log('当前缩放级别:', zoom)
 
-          // 在缩放到1:2公里时，显示乡镇边界
-          if (zoom >= 14) {
-            console.log('搜索乡镇边界')  // 添加日志
-            townshipSearch.value.search(district.name, (status, result) => {
-              console.log('乡镇搜索结果:', status, result)  // 添加日志
-              if (status === 'complete' && result.districtList && result.districtList.length > 0) {
-                result.districtList.forEach(township => {
-                  if (township.boundaries) {
-                    const townPolygons = township.boundaries.map(bound => {
-                      return new AMap.Polygon({
-                        path: bound,
-                        strokeColor: '#3366FF',
-                        strokeWeight: 1,
-                        strokeStyle: 'dashed',
-                        fillColor: '#FFFFFF',
-                        fillOpacity: 0.3,
-                        zIndex: 14
-                      })
-                    })
-                    districtPolygons.value.push(...townPolygons)
-                    map.value.add(townPolygons)
-                  }
-
-                  // 在缩放到1:1公里时，显示村级边界
-                  if (zoom >= 16) {
-                    console.log('搜索村级边界')  // 添加日志
-                    villageSearch.value.search(township.name, (status, result) => {
-                      console.log('村级搜索结果:', status, result)  // 添加日志
-                      if (status === 'complete' && result.districtList && result.districtList.length > 0) {
-                        result.districtList.forEach(village => {
-                          if (village.boundaries) {
-                            const villagePolygons = village.boundaries.map(bound => {
-                              return new AMap.Polygon({
-                                path: bound,
-                                strokeColor: '#3366FF',
-                                strokeWeight: 1,
-                                strokeStyle: 'dotted',
-                                fillColor: '#FFFFFF',
-                                fillOpacity: 0.2,
-                                zIndex: 15
-                              })
-                            })
-                            districtPolygons.value.push(...villagePolygons)
-                            map.value.add(villagePolygons)
-                          }
-                        })
-                      }
-                    })
-                  }
-                })
-              }
-            })
-          }
-        }
-      })
-    }
-  } else {
-    // 缩小时恢复世界地图边界
-    worldLayer.value.show()
-    provinceLayer.value.setMap(null)
-  }
-
-  // 更新信息窗口内容
   if (infoWindow.value && infoWindow.value.getIsOpen()) {
     const position = infoWindow.value.getPosition()
-    const point = farmPoints.find(p => 
+    const point = farmPoints.find(p =>
       p.position[0] === position[0] && p.position[1] === position[1]
     )
     if (point) {
@@ -472,16 +375,49 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.map-container {
+.scale-map-view {
   width: 100%;
   height: 100%;
   position: relative;
-  overflow: hidden;
 }
 
-.map {
+.map-container {
   width: 100%;
   height: 100%;
+}
+
+.layer-switch {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.layer-item {
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+}
+
+.layer-item label {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.layer-item input {
+  cursor: pointer;
+}
+
+/* 隐藏版权信息和logo */
+:deep(.amap-copyright),
+:deep(.amap-logo) {
+  display: none !important;
 }
 
 :deep(.info-window) {
@@ -575,4 +511,4 @@ onUnmounted(() => {
   transform: scaleX(1);
   transform-origin: left;
 }
-</style> 
+</style>

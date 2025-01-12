@@ -92,13 +92,13 @@ const preloadMapResources = () => {
 onMounted(async () => {
   try {
     preloadMapResources()
-    
+
     // 加载 AMap
     loadingText.value = '正在加载地图资源...'
     const AMap = await AMapLoader.load({
       key: import.meta.env.VITE_AMAP_KEY,
       version: '2.0',
-      plugins: [], // 移除不必要的插件
+      plugins: ['AMap.Scale', 'AMap.ToolBar'],  // 添加必要的插件
       Loca: {
         version: '2.0.0'
       }
@@ -108,18 +108,92 @@ onMounted(async () => {
     loadingText.value = '正在初始化地图...'
     map = new AMap.Map('container', {
       zoom: 2,
-      center: [40, 0],
+      center: [0, 0],
+      pitch: 0,
       viewMode: '3D',
-      mapStyle: 'amap://styles/dark',
-      showLabel: false,
-      pitch: 35,
-      rotation: 0,
-      showBuildingBlock: false,
-      features: ['bg', 'point'], // 只加载必要的地图要素
-      preloadMode: true, // 开启预加载模式
-      fadeOnZoom: false, // 禁用缩放动画
-      defaultCursor: 'default'
+      mapStyle: 'amap://styles/normal',
+      features: ['bg', 'building', 'point', 'road', 'water'],
+      showLabel: true
     })
+
+    // 创建信息窗体用于显示坐标
+    const coordInfoWindow = new AMap.InfoWindow({
+      isCustom: true,
+      autoMove: true,
+      offset: new AMap.Pixel(0, -30)
+    })
+
+    let coordTimer = null
+
+    // 添加鼠标移动事件监听
+    map.on('mousemove', (e) => {
+      // 清除之前的定时器
+      if (coordTimer) {
+        clearTimeout(coordTimer)
+      }
+
+      // 格式化坐标，保留6位小数
+      const lng = e.lnglat.getLng().toFixed(6)
+      const lat = e.lnglat.getLat().toFixed(6)
+
+      // 设置信息窗体内容
+      coordInfoWindow.setContent(`
+        <div style="padding: 8px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 4px;">
+          <div>经度：${lng}</div>
+          <div>纬度：${lat}</div>
+        </div>
+      `)
+      coordInfoWindow.open(map, e.lnglat)
+
+      // 2秒后关闭信息窗体
+      coordTimer = setTimeout(() => {
+        coordInfoWindow.close()
+      }, 2000)
+    })
+
+    // 鼠标移出地图时关闭信息窗体
+    map.on('mouseout', () => {
+      if (coordTimer) {
+        clearTimeout(coordTimer)
+      }
+      coordInfoWindow.close()
+    })
+
+    // 添加一个函数来隐藏版权信息
+    const hideCopyright = () => {
+      const copyright = document.querySelector('.amap-copyright')
+      const logo = document.querySelector('.amap-logo')
+      if (copyright) {
+        copyright.style.display = 'none'
+      }
+      if (logo) {
+        logo.style.display = 'none'
+      }
+    }
+
+    // 多次尝试隐藏版权信息
+    hideCopyright()
+    setTimeout(hideCopyright, 100)
+    setTimeout(hideCopyright, 500)
+    setTimeout(hideCopyright, 1000)
+
+    // 在地图完成加载时也尝试隐藏
+    map.on('complete', () => {
+      hideCopyright()
+      setTimeout(hideCopyright, 100)
+    })
+
+    // 添加比例尺控件
+    map.addControl(new AMap.Scale({
+      position: 'LT',
+      offset: new AMap.Pixel(10, 10)
+    }))
+
+    // 添加工具条控件
+    map.addControl(new AMap.ToolBar({
+      position: 'RB',
+      offset: new AMap.Pixel(10, 30)
+    }))
 
     // 创建 Loca 实例
     loadingText.value = '正在创建可视化图层...'
@@ -181,10 +255,10 @@ onMounted(async () => {
 
     // 调整视图
     const bounds = new AMap.Bounds(
-      [Math.min(...confucius_data.map(d => d.lnglat[0])) - 10, 
-       Math.min(...confucius_data.map(d => d.lnglat[1])) - 10],
+      [Math.min(...confucius_data.map(d => d.lnglat[0])) - 10,
+      Math.min(...confucius_data.map(d => d.lnglat[1])) - 10],
       [Math.max(...confucius_data.map(d => d.lnglat[0])) + 10,
-       Math.max(...confucius_data.map(d => d.lnglat[1])) + 10]
+      Math.max(...confucius_data.map(d => d.lnglat[1])) + 10]
     )
     map.setBounds(bounds)
 
@@ -271,7 +345,12 @@ onUnmounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
-</style> 
+</style>

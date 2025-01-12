@@ -1,12 +1,15 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import AppHeader from './components/layout/AppHeader.vue'
 import AppSidebar from './components/layout/AppSidebar.vue'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
+const route = useRoute()
 const isSidebarCollapsed = ref(false)
 const isFullscreen = ref(false)
 const previousSidebarState = ref(false)
+
+const isFullscreenRoute = computed(() => route.meta.fullscreen)
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value
@@ -32,17 +35,22 @@ document.addEventListener('fullscreenchange', () => {
 
 <template>
   <div class="app">
-    <AppHeader 
-      @toggle-sidebar="toggleSidebar" 
-      @fullscreen-change="handleFullscreenChange"
-      :is-fullscreen="isFullscreen"
-    />
-    <div class="main-container">
-      <AppSidebar :collapsed="isSidebarCollapsed" @toggle-sidebar="toggleSidebar" />
-      <main :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
-        <RouterView />
-      </main>
-    </div>
+    <template v-if="!isFullscreenRoute">
+      <AppHeader 
+        @toggle-sidebar="toggleSidebar" 
+        @fullscreen-change="handleFullscreenChange"
+        :is-fullscreen="isFullscreen"
+      />
+      <div class="main-container">
+        <AppSidebar :collapsed="isSidebarCollapsed" @toggle-sidebar="toggleSidebar" />
+        <main :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+          <RouterView />
+        </main>
+      </div>
+    </template>
+    <template v-else>
+      <RouterView class="fullscreen-view" />
+    </template>
   </div>
 </template>
 
@@ -106,6 +114,20 @@ main {
 main.sidebar-collapsed {
   margin-left: 24px;
   width: calc(100% - 24px);
+}
+
+.fullscreen-view {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  padding: 0;
+  margin: 0;
+  background-color: #fff;
 }
 
 /* 优化滚动条样式 */

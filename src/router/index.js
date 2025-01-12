@@ -23,7 +23,8 @@ const router = createRouter({
     {
       path: '/map',
       name: 'map',
-      component: () => import('../views/MapView.vue')
+      component: () => import('../views/MapView.vue'),
+      meta: { fullscreen: true }
     },
     {
       path: '/tasks',
