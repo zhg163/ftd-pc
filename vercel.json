@@ -16,18 +16,18 @@
   "routes": [
     {
       "src": "/ftd-pc/assets/(.*)",
-      "dest": "/dist/assets/$1"
+      "dest": "/assets/$1"
     },
     {
       "src": "/ftd-pc/(.*)",
-      "dest": "/dist/ftd-pc/$1"
+      "dest": "/ftd-pc/$1"
     },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/$1"
+      "dest": "/$1"
     }
   ]
 }
