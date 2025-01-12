@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "framework": "static",
+  "buildCommand": false,
+  "installCommand": false,
+  "outputDirectory": ".",
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/ftd-pc/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/ftd-pc/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
