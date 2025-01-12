@@ -1,1 +1,0 @@
-import e from"./ScaleMapView-CujIh64Q.js";import{_ as a,c as o,b as t,o as c}from"./index-dnp5Bl2A.js";const s={class:"map-view"},_={__name:"MapView",setup(p){return(r,i)=>(c(),o("div",s,[t(e)]))}},d=a(_,[["__scopeId","data-v-629e7517"]]);export{d as default};
